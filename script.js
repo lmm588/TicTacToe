@@ -96,8 +96,8 @@ const gameController = function () { //will control all aspects of the game.
 
         if (isWinningLine(row) || //If any of the win conditions are met.. this block could be refactored - relatively unreadable?
             isWinningLine(col) ||
-            primaryDiagonal > 0 && (isWinningLine(primaryDiagonal))
-            || secondaryDiagonal > 0 && (isWinningLine(secondaryDiagonal))
+            isWinningLine(primaryDiagonal) || 
+            (isWinningLine(secondaryDiagonal))
         ) {
             gameWinner = player.userName;
             console.log(`${gameWinner} has won the game!`);
