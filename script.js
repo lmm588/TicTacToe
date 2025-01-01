@@ -13,7 +13,7 @@ const gameBoard = (function () { //Will control everything relating to the gameb
 
     const claimCell = (rowSelection, columnSelection, playerSymbol) => {
         if (board[rowSelection][columnSelection].player === null) {
-        board[rowSelection][columnSelection].player = `${playerSymbol}`;
+            board[rowSelection][columnSelection].player = `${playerSymbol}`;
         }
     }
 
@@ -49,7 +49,7 @@ function Player(name, symbol) { //Factory function for player creation.
     return { userName, userSymbol }
 };
 
-const gameController = function () { //will control all aspects of the game.
+function gameController() { //will control all aspects of the game.
     let players = {
         playerOne: Player("Player One", "x"),
         playerTwo: Player("Player Two", "o"),
@@ -86,7 +86,7 @@ const gameController = function () { //will control all aspects of the game.
     };
 
     const checkForWin = (player, rowSelection, columnSelection) => {
-        const { row, col, primaryDiagonal, secondaryDiagonal } = gameBoard.getLinesFromSelectedCell(rowSelection, columnSelection); //Object destructuring!
+        const { row, col, primaryDiagonal, secondaryDiagonal } = gameBoard.getLinesFromSelectedCell(rowSelection, columnSelection); // Destructuring the returned object.
 
         const isWinningLine = (line) => { //Because of the magic square, we just need to check each line (row, col or diagonal) held by the player to see if they total to the magic constant (15).
             let playerCells = line.filter(cell => cell.player === player.userSymbol);
@@ -94,11 +94,8 @@ const gameController = function () { //will control all aspects of the game.
             return playerSum === 15;
         };
 
-        if (isWinningLine(row) || //If any of the win conditions are met.. this block could be refactored - relatively unreadable?
-            isWinningLine(col) ||
-            isWinningLine(primaryDiagonal) || 
-            (isWinningLine(secondaryDiagonal))
-        ) {
+        if (isWinningLine(row) || isWinningLine(col) || isWinningLine(primaryDiagonal) || (isWinningLine(secondaryDiagonal))) //If any of the win conditions are met.
+        {
             gameWinner = player.userName;
             console.log(`${gameWinner} has won the game!`);
         }
@@ -111,8 +108,32 @@ const gameController = function () { //will control all aspects of the game.
     }
 
     return { switchPlayerTurn, getCurrentPlayer, playRound, checkForWin };
-}();
-
-const uiController = function () { //will control the users interaction with UI elements
-
 };
+
+const uiController = (function () { //will control the users interaction with UI elements
+    const domElements = {}; //Initialize object to hold dom elements for reusability sake.
+
+    const game = gameController();
+
+    const cacheDOM = () => {
+        domElements.cellGrid = document.querySelector(".game-cells-grid");
+    };
+
+    const getDOMElements = () => {
+        if (Object.keys(domElements).length === 0) { //We want to keep caching to a minimum
+            cacheDOM();
+        }
+
+        return domElements;
+    }
+
+    const buildTable = (() => {
+        const { cellGrid } = getDOMElements();
+        for (let i = 0; i <= 8; i++) {
+            const gameCell = document.createElement("div");
+            gameCell.classList.add("cell");
+            cellGrid.appendChild(gameCell);
+        }
+    })();
+
+})();

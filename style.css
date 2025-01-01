@@ -1,0 +1,43 @@
+* {
+    margin: 0px;
+    padding: 0px;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: border-box;
+}
+
+:root {
+    --space-s: 5px;
+}
+
+.main-content {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-cells-grid {
+    width: fit-content;
+    background-color: black;
+    padding: var(--space-s);
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 200px);
+    gap: var(--space-s);
+}
+
+.cell {
+    width: 200px;
+    height: 200px;
+    background-color: white;
+}
+
+.cell:hover {
+    cursor: pointer;
+    background-color: grey;
+}
