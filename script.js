@@ -11,8 +11,10 @@ const gameBoard = (function () { //Will control everything relating to the gameb
 
     const getBoard = () => board; //Exposes board variable while keeping it private in lexical scope/closure.
 
-    const claimSquare = (rowSelection, columnSelection, playerSymbol) => {
+    const claimCell = (rowSelection, columnSelection, playerSymbol) => {
+        if (board[rowSelection][columnSelection].player === null) {
         board[rowSelection][columnSelection].player = `${playerSymbol}`;
+        }
     }
 
     const printBoard = () => {
@@ -25,20 +27,20 @@ const gameBoard = (function () { //Will control everything relating to the gameb
     const getLinesFromSelectedCell = (rowSelection, columnSelection) => { //This will get the row, column and diagonal (if applicable) relevant to the player's selected cell.
         const row = board[rowSelection];
         const col = board.map(row => row[columnSelection]);
-        let primaryDiagonal;
-        let secondaryDiagonal;
+        let primaryDiagonal = [];
+        let secondaryDiagonal = [];
 
-        if (row === col) { //If the row is the same as the column, we could have a diagonal win. 
+        if (rowSelection === columnSelection) { //If the row is the same as the column, we could have a diagonal win. 
             primaryDiagonal = [board[0][0], board[1][1], board[2][2]];
         }
 
-        if (row + col === 2) { // This checks if the cell is on the secondary diagonal.
+        if (rowSelection + columnSelection === 2) { // This checks if the cell is on the secondary diagonal.
             secondaryDiagonal = [board[0][2], board[1][1], board[2][0]];
         }
         return { row, col, primaryDiagonal, secondaryDiagonal }
     };
 
-    return { getBoard, claimSquare, printBoard, getLinesFromSelectedCell };
+    return { getBoard, claimCell, printBoard, getLinesFromSelectedCell };
 })();
 
 function Player(name, symbol) { //Factory function for player creation.
@@ -77,7 +79,7 @@ const gameController = function () { //will control all aspects of the game.
 
         roundCount++;
         console.log(`${getCurrentPlayer().userName} has made their decision!`);
-        gameBoard.claimSquare(rowSelection, columnSelection, getCurrentPlayer().userSymbol);
+        gameBoard.claimCell(rowSelection, columnSelection, getCurrentPlayer().userSymbol);
         gameBoard.printBoard();
         checkForWin(getCurrentPlayer(), rowSelection, columnSelection);
         switchPlayerTurn();
@@ -87,19 +89,22 @@ const gameController = function () { //will control all aspects of the game.
         const { row, col, primaryDiagonal, secondaryDiagonal } = gameBoard.getLinesFromSelectedCell(rowSelection, columnSelection); //Object destructuring!
 
         const isWinningLine = (line) => { //Because of the magic square, we just need to check each line (row, col or diagonal) held by the player to see if they total to the magic constant (15).
-            const playerCells = line.filter(cell => cell.player === player.userSymbol);
-            const playerSum = playerCells.reduce((sum, cell) => sum + cell.value, 0);
+            let playerCells = line.filter(cell => cell.player === player.userSymbol);
+            let playerSum = playerCells.reduce((sum, cell) => sum + cell.value, 0);
             return playerSum === 15;
         };
 
-        if (isWinningLine(row) || isWinningLine(col) || primaryDiagonal > 0 && (isWinningLine(primaryDiagonal)) //Any of the win conditions, could be refactored - relatively unreadable?
-            || secondaryDiagonal > 0 && (isWinningLine(secondaryDiagonal))) {
+        if (isWinningLine(row) || //If any of the win conditions are met.. this block could be refactored - relatively unreadable?
+            isWinningLine(col) ||
+            primaryDiagonal > 0 && (isWinningLine(primaryDiagonal))
+            || secondaryDiagonal > 0 && (isWinningLine(secondaryDiagonal))
+        ) {
             gameWinner = player.userName;
             console.log(`${gameWinner} has won the game!`);
         }
 
         else if (roundCount === 9) { //If all 9 turns have been used, the game must be a draw.
-            gameResult = "Draw"; 
+            gameResult = "Draw";
             console.log("It's a draw!");
         }
 
