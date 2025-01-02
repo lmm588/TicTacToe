@@ -15,14 +15,15 @@ const gameBoard = (function () { //Will control everything relating to the gameb
         if (board[rowSelection][columnSelection].player === null) {
             board[rowSelection][columnSelection].player = `${playerSymbol}`;
         }
-    }
+    };
 
-    const printBoard = () => {
+    const clearBoard = () => {
         for (let row of board) {
-            let rowString = row.map(cell => `${cell.value} (${cell.player || " "})`).join(" | ");
-            console.log(rowString);
+            for (let cell of row) {
+                cell.player = null;
+            }
         }
-    }
+    };
 
     const getLinesFromSelectedCell = (rowSelection, columnSelection) => { //This will return the row, column and diagonal of the player's selected cell.
         const row = board[rowSelection];
@@ -32,7 +33,7 @@ const gameBoard = (function () { //Will control everything relating to the gameb
         return { row, col, primaryDiagonal, secondaryDiagonal }
     };
 
-    return { getBoard, claimCell, printBoard, getLinesFromSelectedCell };
+    return { getBoard, claimCell, getLinesFromSelectedCell, clearBoard };
 })();
 
 function Player(name, symbol) { //Factory function for player creation.
@@ -42,24 +43,43 @@ function Player(name, symbol) { //Factory function for player creation.
 };
 
 function GameController() { //will control all aspects of the game.
-    let players = {
-        playerOne: Player("Player One", "x"),
-        playerTwo: Player("Player Two", "o"),
-    };
-
-    let currentPlayer = players.playerOne;
+    let currentPlayer;
     let roundCount = 0;
     let gameResult = "";
     let gameWinner = null;
     let gameOver = false;
+    let players = {};
+
+    function createPlayers(playerOneName, playerTwoName) {
+        players = {
+            playerOne: Player(playerOneName, "x"),
+            playerTwo: Player(playerTwoName, "o"),
+        };
+        currentPlayer = players.playerOne;
+        return players;
+    };
 
     const getGameStatus = () => gameOver;
+
+    const getGameResult = () => gameResult;
 
     const getCurrentPlayer = () => currentPlayer;
 
     const switchPlayerTurn = () => {
         currentPlayer === players.playerOne ? currentPlayer = players.playerTwo
             : currentPlayer = players.playerOne; //If current turn is player one, then switch to two, and vice versa
+            console.log(currentPlayer);
+    };
+
+
+    const resetGame = () => { //Resets game parameters.
+        roundCount = 0;
+        currentPlayer = players.playerOne;
+        gameResult = "";
+        gameWinner = null;
+        gameOver = false;
+        gameBoard.clearBoard();
+        uiController.clearUI();
     };
 
     const playRound = (rowSelection, columnSelection) => {
@@ -69,18 +89,14 @@ function GameController() { //will control all aspects of the game.
         if (gameBoard.getBoard()[rowSelection][columnSelection].player !== null) { //If the cell has already been selected.
             return;
         }
-
         roundCount++;
-        console.log(`${getCurrentPlayer().userName} has made their decision!`);
         gameBoard.claimCell(rowSelection, columnSelection, getCurrentPlayer().userSymbol);
-        gameBoard.printBoard();
         checkForWin(getCurrentPlayer(), rowSelection, columnSelection);
         switchPlayerTurn();
     };
 
     const checkForWin = (player, rowSelection, columnSelection) => {
         const { row, col, primaryDiagonal, secondaryDiagonal } = gameBoard.getLinesFromSelectedCell(rowSelection, columnSelection); // Destructuring the returned object.
-        const { gameOverMessage } = uiController.getDOMElements();
 
         const isWinningLine = (line) => { //Because of the magic square, we just need to check each line (row, col or diagonal) held by the player to see if they total to the magic constant (15).
             let playerCells = line.filter(cell => cell.player === player.userSymbol);
@@ -92,25 +108,18 @@ function GameController() { //will control all aspects of the game.
         {
             gameWinner = player.userName;
             gameResult = `${gameWinner} has won the game!`;
-            uiController.writeToElement(gameOverMessage, gameResult);
             gameOver = true;
             return;
         }
 
-        else if (roundCount === 9) { //If all 9 turns have been used, the game must be a draw.
+        if (roundCount === 9) { //If all 9 turns have been used, the game must be a draw.
             gameResult = "It's a draw!";
-            uiController.writeToElement(gameOverMessage, gameResult);
             gameOver = true;
             return;
-        }
+        };
+    };
 
-    }
-
-    const resetGame = () => { //Resets game parameters.
-        
-    }
-
-    return { getGameStatus, switchPlayerTurn, getCurrentPlayer, playRound, checkForWin, resetGame };
+    return { getGameStatus, getGameResult, switchPlayerTurn, getCurrentPlayer, playRound, checkForWin, resetGame, createPlayers };
 };
 
 const uiController = (function () { //will control the users interaction with UI elements
@@ -120,10 +129,11 @@ const uiController = (function () { //will control the users interaction with UI
 
     const cacheDOM = () => {
         domElements.cellGrid = document.querySelector(".game-cells-grid");
-        domElements.gameOverMessage = document.querySelector("h3");
+        domElements.displayedMessage = document.querySelector("h3");
         domElements.playerForm = document.querySelector("form");
         domElements.playerFormWrapper = document.querySelector(".player-form-wrapper");
         domElements.gameContent = document.querySelector(".game-content");
+        domElements.resetButton = document.querySelector(".reset");
     };
 
     const getDOMElements = () => {
@@ -131,37 +141,57 @@ const uiController = (function () { //will control the users interaction with UI
             cacheDOM();
         }
         return domElements;
-    }
+    };
 
     const addCellEventListener = (() => { //Event delegation to save memory/performance
-        const { cellGrid } = getDOMElements();
+        const { cellGrid, displayedMessage } = getDOMElements();
+
         cellGrid.addEventListener("click", (e) => {
-            if (e.target.classList.contains("cell")) { //Just to make sure we are clicking on a cell item.
-                if (e.target.innerHTML === "") {
-                    writeToElement(e.target, game.getCurrentPlayer().userSymbol);
-                    game.playRound(e.target.getAttribute("row"), e.target.getAttribute("column"));
+            if (!game.getGameStatus()) { //Game not over
+                if (e.target.classList.contains("cell")) { //Just to make sure we are clicking on a cell item.
+                    if (e.target.innerHTML === "") { //Clicked on cell must be empty/not claimed.
+                        writeToElement(e.target, game.getCurrentPlayer().userSymbol);
+                        game.playRound(e.target.getAttribute("row"), e.target.getAttribute("column"));
+                        writeToElement(displayedMessage, `${game.getCurrentPlayer().userName}'s turn!`);
+                    }
                 }
             } else return;
         });
     });
 
+    const addResetButtonEventListener = (() => {
+        const { resetButton } = getDOMElements();
+        resetButton.addEventListener("click", () => { 
+            game.resetGame()
+            resetButton.classList.add("no-click");
+            resetButton.classList.remove("show");
+        }
+    )});
+
     const writeToElement = (element, content) => {
+        const { displayedMessage, resetButton } = getDOMElements();
         if (game.getGameStatus()) { //If game is over;
-            return;
-        } else
-            element.textContent = content;
-    }
+            displayedMessage.textContent = game.getGameResult();
+            resetButton.classList.remove("no-click");
+            setTimeout(() => resetButton.classList.add("show"), 10);
+        } else element.textContent = content;
+    };
 
     const playerFormSubmitHandler = (() => {
-        const { playerForm, playerFormWrapper, gameContent } = getDOMElements();
+        const { playerForm, playerFormWrapper, gameContent, displayedMessage } = getDOMElements();
         playerForm.addEventListener("submit", (e) => {
             e.preventDefault();
+            e.target.classList.add("no-click");
+            const playerOneName = e.target.querySelector("input:first-of-type").value === "" ? "Player One" : e.target.querySelector("input:first-of-type").value;
+            const playerTwoName = e.target.querySelector("input:last-of-type").value === "" ? "Player Two" : e.target.querySelector("input:last-of-type").value;
+            game.createPlayers(playerOneName, playerTwoName);
+            writeToElement(displayedMessage, `${playerOneName}'s turn!`);
             playerFormWrapper.classList.add("fade-out");
             buildTable();
-            setTimeout(() => playerFormWrapper.classList.add("hidden"), 500);
-            setTimeout(() => gameContent.classList.remove("hidden"), 2000);
+            setTimeout(() => playerFormWrapper.classList.add("hidden"), 300);
+            gameContent.style.display = 'block';
+            setTimeout(() => { gameContent.classList.add('show'); }, 400);
         });
-
     })();
 
     const buildTable = (() => {
@@ -177,6 +207,18 @@ const uiController = (function () { //will control the users interaction with UI
             };
         };
         addCellEventListener();
+        addResetButtonEventListener();
     });
-    return { getDOMElements, writeToElement };
+
+    const clearUI = () => {
+        const { displayedMessage } = getDOMElements();
+        domElements.cells = document.querySelectorAll(".cell");
+        writeToElement(displayedMessage, `${game.getCurrentPlayer().userName}'s turn!`);
+        domElements.cells.forEach(cell => {
+            console.log(cell);
+            writeToElement(cell, "");
+        });
+    }
+
+    return { clearUI };
 })();
