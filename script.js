@@ -24,12 +24,11 @@ const gameBoard = (function () { //Will control everything relating to the gameb
         }
     }
 
-    const getLinesFromSelectedCell = (rowSelection, columnSelection) => { //This will get the row, column and diagonal (if applicable) relevant to the player's selected cell.
+    const getLinesFromSelectedCell = (rowSelection, columnSelection) => { //This will return the row, column and diagonal of the player's selected cell.
         const row = board[rowSelection];
         const col = board.map(row => row[columnSelection]);
         let primaryDiagonal = [board[0][0], board[1][1], board[2][2]];
         let secondaryDiagonal = [board[0][2], board[1][1], board[2][0]];
-
         return { row, col, primaryDiagonal, secondaryDiagonal }
     };
 
@@ -54,7 +53,7 @@ function GameController() { //will control all aspects of the game.
     let gameWinner = null;
     let gameOver = false;
 
-    const getGameStatus = () => gameOver; 
+    const getGameStatus = () => gameOver;
 
     const getCurrentPlayer = () => currentPlayer;
 
@@ -95,7 +94,6 @@ function GameController() { //will control all aspects of the game.
             gameResult = `${gameWinner} has won the game!`;
             uiController.writeToElement(gameOverMessage, gameResult);
             gameOver = true;
-            
             return;
         }
 
@@ -109,7 +107,7 @@ function GameController() { //will control all aspects of the game.
     }
 
     const resetGame = () => { //Resets game parameters.
-        console.log();
+        
     }
 
     return { getGameStatus, switchPlayerTurn, getCurrentPlayer, playRound, checkForWin, resetGame };
@@ -123,13 +121,15 @@ const uiController = (function () { //will control the users interaction with UI
     const cacheDOM = () => {
         domElements.cellGrid = document.querySelector(".game-cells-grid");
         domElements.gameOverMessage = document.querySelector("h3");
+        domElements.playerForm = document.querySelector("form");
+        domElements.playerFormWrapper = document.querySelector(".player-form-wrapper");
+        domElements.gameContent = document.querySelector(".game-content");
     };
 
     const getDOMElements = () => {
         if (Object.keys(domElements).length === 0) { //We want to keep caching to a minimum
             cacheDOM();
         }
-
         return domElements;
     }
 
@@ -146,17 +146,28 @@ const uiController = (function () { //will control the users interaction with UI
     });
 
     const writeToElement = (element, content) => {
-
         if (game.getGameStatus()) { //If game is over;
             return;
         } else
             element.textContent = content;
     }
 
+    const playerFormSubmitHandler = (() => {
+        const { playerForm, playerFormWrapper, gameContent } = getDOMElements();
+        playerForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            playerFormWrapper.classList.add("fade-out");
+            buildTable();
+            setTimeout(() => playerFormWrapper.classList.add("hidden"), 500);
+            setTimeout(() => gameContent.classList.remove("hidden"), 2000);
+        });
+
+    })();
+
     const buildTable = (() => {
         const { cellGrid } = getDOMElements();
         let board = gameBoard.getBoard();
-        for (let rowIndex = 0; rowIndex < board.length; rowIndex++) { //Use nested for loops to loop through multi-dimensional array, one to loop through 
+        for (let rowIndex = 0; rowIndex < board.length; rowIndex++) { //Use nested for loops to loop through multi-dimensional array
             for (let colIndex = 0; colIndex < board[rowIndex].length; colIndex++) {
                 const gameCell = document.createElement("div");
                 gameCell.classList.add("cell");
@@ -166,6 +177,6 @@ const uiController = (function () { //will control the users interaction with UI
             };
         };
         addCellEventListener();
-    })();
-    return {getDOMElements, writeToElement};
+    });
+    return { getDOMElements, writeToElement };
 })();
