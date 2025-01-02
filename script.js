@@ -50,7 +50,7 @@ function GameController() { //will control all aspects of the game.
     let gameOver = false;
     let players = {};
 
-    function createPlayers(playerOneName, playerTwoName) {
+    const createPlayers = (playerOneName, playerTwoName) => {
         players = {
             playerOne: Player(playerOneName, "x"),
             playerTwo: Player(playerTwoName, "o"),
@@ -68,7 +68,6 @@ function GameController() { //will control all aspects of the game.
     const switchPlayerTurn = () => {
         currentPlayer === players.playerOne ? currentPlayer = players.playerTwo
             : currentPlayer = players.playerOne; //If current turn is player one, then switch to two, and vice versa
-            console.log(currentPlayer);
     };
 
 
@@ -143,30 +142,29 @@ const uiController = (function () { //will control the users interaction with UI
         return domElements;
     };
 
-    const addCellEventListener = (() => { //Event delegation to save memory/performance
+    const addCellEventListener = () => { //Event delegation to save memory/performance
         const { cellGrid, displayedMessage } = getDOMElements();
 
         cellGrid.addEventListener("click", (e) => {
             if (!game.getGameStatus()) { //Game not over
-                if (e.target.classList.contains("cell")) { //Just to make sure we are clicking on a cell item.
-                    if (e.target.innerHTML === "") { //Clicked on cell must be empty/not claimed.
-                        writeToElement(e.target, game.getCurrentPlayer().userSymbol);
-                        game.playRound(e.target.getAttribute("row"), e.target.getAttribute("column"));
-                        writeToElement(displayedMessage, `${game.getCurrentPlayer().userName}'s turn!`);
-                    }
+                if (e.target.classList.contains("cell") && e.target.innerHTML === "") {
+                    writeToElement(e.target, game.getCurrentPlayer().userSymbol);
+                    game.playRound(e.target.getAttribute("row"), e.target.getAttribute("column"));
+                    writeToElement(displayedMessage, `${game.getCurrentPlayer().userName}'s turn!`);
                 }
-            } else return;
+            } else { return }
         });
-    });
+    };
 
-    const addResetButtonEventListener = (() => {
+    const addResetButtonEventListener = () => {
         const { resetButton } = getDOMElements();
-        resetButton.addEventListener("click", () => { 
+        resetButton.addEventListener("click", () => {
             game.resetGame()
             resetButton.classList.add("no-click");
             resetButton.classList.remove("show");
         }
-    )});
+        )
+    };
 
     const writeToElement = (element, content) => {
         const { displayedMessage, resetButton } = getDOMElements();
@@ -188,13 +186,17 @@ const uiController = (function () { //will control the users interaction with UI
             writeToElement(displayedMessage, `${playerOneName}'s turn!`);
             playerFormWrapper.classList.add("fade-out");
             buildTable();
-            setTimeout(() => playerFormWrapper.classList.add("hidden"), 300);
+            setTimeout(() => {
+                playerFormWrapper.classList.add("hidden");
+                setTimeout(() => {
+                    gameContent.classList.add('show');
+                }, 400);
+            }, 300);
             gameContent.style.display = 'block';
-            setTimeout(() => { gameContent.classList.add('show'); }, 400);
         });
     })();
 
-    const buildTable = (() => {
+    const buildTable = () => {
         const { cellGrid } = getDOMElements();
         let board = gameBoard.getBoard();
         for (let rowIndex = 0; rowIndex < board.length; rowIndex++) { //Use nested for loops to loop through multi-dimensional array
@@ -208,14 +210,13 @@ const uiController = (function () { //will control the users interaction with UI
         };
         addCellEventListener();
         addResetButtonEventListener();
-    });
+    };
 
     const clearUI = () => {
         const { displayedMessage } = getDOMElements();
         domElements.cells = document.querySelectorAll(".cell");
         writeToElement(displayedMessage, `${game.getCurrentPlayer().userName}'s turn!`);
         domElements.cells.forEach(cell => {
-            console.log(cell);
             writeToElement(cell, "");
         });
     }
