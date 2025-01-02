@@ -13,6 +13,10 @@
     --space-s: 5px;
 }
 
+body {
+    font-size: 18px;
+}
+
 .main-content {
     height: 100vh;
     display: flex;
@@ -35,6 +39,10 @@
     width: 200px;
     height: 200px;
     background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8rem;
 }
 
 .cell:hover {

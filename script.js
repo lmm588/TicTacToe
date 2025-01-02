@@ -49,7 +49,7 @@ function Player(name, symbol) { //Factory function for player creation.
     return { userName, userSymbol }
 };
 
-function gameController() { //will control all aspects of the game.
+function GameController() { //will control all aspects of the game.
     let players = {
         playerOne: Player("Player One", "x"),
         playerTwo: Player("Player Two", "o"),
@@ -59,6 +59,7 @@ function gameController() { //will control all aspects of the game.
     let roundCount = 0;
     let gameResult = "";
     let gameWinner = null;
+    let gameOver = false;
 
 
     const switchPlayerTurn = () => {
@@ -98,6 +99,7 @@ function gameController() { //will control all aspects of the game.
         {
             gameWinner = player.userName;
             console.log(`${gameWinner} has won the game!`);
+            return gameOver = true;
         }
 
         else if (roundCount === 9) { //If all 9 turns have been used, the game must be a draw.
@@ -113,7 +115,7 @@ function gameController() { //will control all aspects of the game.
 const uiController = (function () { //will control the users interaction with UI elements
     const domElements = {}; //Initialize object to hold dom elements for reusability sake.
 
-    const game = gameController();
+    const game = GameController();
 
     const cacheDOM = () => {
         domElements.cellGrid = document.querySelector(".game-cells-grid");
@@ -127,13 +129,34 @@ const uiController = (function () { //will control the users interaction with UI
         return domElements;
     }
 
-    const buildTable = (() => {
+    const addCellEventListener = (() => { //Event delegation to save memory/performance
         const { cellGrid } = getDOMElements();
-        for (let i = 0; i <= 8; i++) {
-            const gameCell = document.createElement("div");
-            gameCell.classList.add("cell");
-            cellGrid.appendChild(gameCell);
-        }
-    })();
+        cellGrid.addEventListener("click", (e) => {
+            if (e.target.classList.contains("cell")) { //Just to make sure we are clicking on a cell item.
+                if (e.target.innerHTML === "") {
+                    writeToCell(e.target, game.getCurrentPlayer().userSymbol);
+                    game.playRound(e.target.getAttribute("row"), e.target.getAttribute("column"));
+                }
+            } else return;
+        });
+    });
 
+    const writeToCell = (element, playerSymbol) => {
+        element.textContent = playerSymbol;
+    }
+
+    const buildTable = (() => { 
+        const { cellGrid } = getDOMElements();
+        let board = gameBoard.getBoard();
+        for (let rowIndex = 0; rowIndex < board.length; rowIndex++) { //Use nested for loops to loop through multi-dimensional array, one to loop through 
+            for (let colIndex = 0; colIndex < board[rowIndex].length; colIndex++) {
+                const gameCell = document.createElement("div");
+                gameCell.classList.add("cell");
+                gameCell.setAttribute("row", rowIndex);
+                gameCell.setAttribute("column", colIndex);
+                cellGrid.appendChild(gameCell);
+            };
+        };
+        addCellEventListener();
+    })();
 })();
