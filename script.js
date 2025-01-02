@@ -27,16 +27,9 @@ const gameBoard = (function () { //Will control everything relating to the gameb
     const getLinesFromSelectedCell = (rowSelection, columnSelection) => { //This will get the row, column and diagonal (if applicable) relevant to the player's selected cell.
         const row = board[rowSelection];
         const col = board.map(row => row[columnSelection]);
-        let primaryDiagonal = [];
-        let secondaryDiagonal = [];
+        let primaryDiagonal = [board[0][0], board[1][1], board[2][2]];
+        let secondaryDiagonal = [board[0][2], board[1][1], board[2][0]];
 
-        if (rowSelection === columnSelection) { //If the row is the same as the column, we could have a diagonal win. 
-            primaryDiagonal = [board[0][0], board[1][1], board[2][2]];
-        }
-
-        if (rowSelection + columnSelection === 2) { // This checks if the cell is on the secondary diagonal.
-            secondaryDiagonal = [board[0][2], board[1][1], board[2][0]];
-        }
         return { row, col, primaryDiagonal, secondaryDiagonal }
     };
 
@@ -61,20 +54,20 @@ function GameController() { //will control all aspects of the game.
     let gameWinner = null;
     let gameOver = false;
 
+    const getGameStatus = () => gameOver; 
+
+    const getCurrentPlayer = () => currentPlayer;
 
     const switchPlayerTurn = () => {
         currentPlayer === players.playerOne ? currentPlayer = players.playerTwo
             : currentPlayer = players.playerOne; //If current turn is player one, then switch to two, and vice versa
     };
 
-    const getCurrentPlayer = () => currentPlayer;
-
     const playRound = (rowSelection, columnSelection) => {
-        if (gameWinner !== null) { //If the game has a winner, the game is over.
+        if (gameOver) { //If the game has a winner, the game is over.
             return
         }
         if (gameBoard.getBoard()[rowSelection][columnSelection].player !== null) { //If the cell has already been selected.
-            console.log("You can't place here.");
             return;
         }
 
@@ -88,6 +81,7 @@ function GameController() { //will control all aspects of the game.
 
     const checkForWin = (player, rowSelection, columnSelection) => {
         const { row, col, primaryDiagonal, secondaryDiagonal } = gameBoard.getLinesFromSelectedCell(rowSelection, columnSelection); // Destructuring the returned object.
+        const { gameOverMessage } = uiController.getDOMElements();
 
         const isWinningLine = (line) => { //Because of the magic square, we just need to check each line (row, col or diagonal) held by the player to see if they total to the magic constant (15).
             let playerCells = line.filter(cell => cell.player === player.userSymbol);
@@ -98,18 +92,27 @@ function GameController() { //will control all aspects of the game.
         if (isWinningLine(row) || isWinningLine(col) || isWinningLine(primaryDiagonal) || (isWinningLine(secondaryDiagonal))) //If any of the win conditions are met.
         {
             gameWinner = player.userName;
-            console.log(`${gameWinner} has won the game!`);
-            return gameOver = true;
+            gameResult = `${gameWinner} has won the game!`;
+            uiController.writeToElement(gameOverMessage, gameResult);
+            gameOver = true;
+            
+            return;
         }
 
         else if (roundCount === 9) { //If all 9 turns have been used, the game must be a draw.
-            gameResult = "Draw";
-            console.log("It's a draw!");
+            gameResult = "It's a draw!";
+            uiController.writeToElement(gameOverMessage, gameResult);
+            gameOver = true;
+            return;
         }
 
     }
 
-    return { switchPlayerTurn, getCurrentPlayer, playRound, checkForWin };
+    const resetGame = () => { //Resets game parameters.
+        console.log();
+    }
+
+    return { getGameStatus, switchPlayerTurn, getCurrentPlayer, playRound, checkForWin, resetGame };
 };
 
 const uiController = (function () { //will control the users interaction with UI elements
@@ -119,6 +122,7 @@ const uiController = (function () { //will control the users interaction with UI
 
     const cacheDOM = () => {
         domElements.cellGrid = document.querySelector(".game-cells-grid");
+        domElements.gameOverMessage = document.querySelector("h3");
     };
 
     const getDOMElements = () => {
@@ -134,18 +138,22 @@ const uiController = (function () { //will control the users interaction with UI
         cellGrid.addEventListener("click", (e) => {
             if (e.target.classList.contains("cell")) { //Just to make sure we are clicking on a cell item.
                 if (e.target.innerHTML === "") {
-                    writeToCell(e.target, game.getCurrentPlayer().userSymbol);
+                    writeToElement(e.target, game.getCurrentPlayer().userSymbol);
                     game.playRound(e.target.getAttribute("row"), e.target.getAttribute("column"));
                 }
             } else return;
         });
     });
 
-    const writeToCell = (element, playerSymbol) => {
-        element.textContent = playerSymbol;
+    const writeToElement = (element, content) => {
+
+        if (game.getGameStatus()) { //If game is over;
+            return;
+        } else
+            element.textContent = content;
     }
 
-    const buildTable = (() => { 
+    const buildTable = (() => {
         const { cellGrid } = getDOMElements();
         let board = gameBoard.getBoard();
         for (let rowIndex = 0; rowIndex < board.length; rowIndex++) { //Use nested for loops to loop through multi-dimensional array, one to loop through 
@@ -159,4 +167,5 @@ const uiController = (function () { //will control the users interaction with UI
         };
         addCellEventListener();
     })();
+    return {getDOMElements, writeToElement};
 })();
