@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
 * {
     margin: 0px;
     padding: 0px;
@@ -10,11 +12,33 @@
 }
 
 :root {
-    --space-s: 5px;
+    --space-s: 0.5rem;
+    --space-m: 1rem;
+    --space-l: 2rem;
+    --color-primary: #8b5cf6;
+    --color-secondary: #2e1065;
+    --color-tertiary: #ddd6fe;
 }
 
 body {
     font-size: 18px;
+    height: 100vh;
+    font-family: "Roboto", serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+footer {
+    background-color: var(--color-secondary);
+    color: var(--color-tertiary);
+    width: 100%;
+    height: 3rem;
+    padding: var(--space-s);
+    display: grid;
+    align-items: center;
+    justify-content: center;
 }
 
 h3 {
@@ -22,17 +46,41 @@ h3 {
     height: 3rem;
 }
 
-.main-content {
-    height: 100vh;
+button {
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    background-color: var(--color-primary);
+    color: white;
+}
+
+button:hover {
+    cursor: pointer;
+    opacity: 60%;
+}
+
+.viewport-warning {
+    display: none;
+}
+
+.main-content-wrapper {
+    width: 100vw;
+    padding: var(--space-l)
+}
+
+.game-content {
+    width: 100%;
+    height: auto;
     display: flex;
+    align-items: center;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
 }
 
 .game-cells-grid {
     width: fit-content;
-    background-color: black;
+    background-color: var(--color-secondary);
     display: grid;
     grid-template-rows: repeat(3, 1fr);
     grid-template-columns: repeat(3, 8rem);
@@ -43,6 +91,7 @@ h3 {
     width: 8rem;
     height: 8rem;
     background-color: white;
+    color: var(--color-primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -51,10 +100,87 @@ h3 {
 
 .cell:hover {
     cursor: pointer;
-    background-color: grey;
+    background-color: var(--color-tertiary);
 }
 
+.player-form-wrapper {
+    display: block;
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: max(256px, 30%);
+    justify-self: center;
+    align-self: center;
+    visibility: visible;
+    opacity: 1;
+}
+.player-form-wrapper> h2 {
+    text-align: center;
+    margin-bottom: var(--space-l);
+    font-size: 3rem;
+    color: var(--color-primary);
+}
 
+fieldset > h4 {
+    margin: var(--space-m);
+}
+
+fieldset {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-m) var(--space-l);
+    border: none;
+    border-radius: 10px;
+    width: 100%;
+    color: var(--color-secondary);
+    background-color: var(--color-tertiary);
+}
+
+fieldset > input {
+    border: 0px;
+    padding: var(--space-s);
+    width: 75%;
+    border-radius: 5px;
+}
+
+fieldset > button {
+    margin: var(--space-m);
+    width: 75%;
+}
+
+input:focus, input:focus-visible{
+    outline: 0px;
+}
+
+label {
+    margin-bottom: var(--space-s);
+}
+
+label:nth-of-type(2) {
+    margin-top: var(--space-m);
+}
+
+.fade-out{
+    opacity: 0;
+    transition: visibility 0.5s, opacity 0.5s linear;
+}
+
+.hidden{
+    display: none;
+    opacity: 0%;
+}
+
+@media (max-height: 466px){
+    .main-content-wrapper {
+        display: none;
+    }
+
+    .viewport-warning {
+        display: block !important;
+    }
+}
 
 /* .strikethrough {
     position: relative;

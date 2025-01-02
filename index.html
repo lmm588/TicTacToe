@@ -9,13 +9,30 @@
 </head>
 
 <body>
-    <div class="main-content">
-        <h3></h3>
-        <div class="game-cells-grid">
-            <!-- Grid Content -->
+    <h1 class="viewport-warning">Please increase your window size!</h1>
+    <div class="main-content-wrapper">
+        <div class="player-form-wrapper">
+            <h2>Tic Tac Toe</h2>
+            <form>
+                <fieldset>
+                    <h4>Enter Player Names</h4>
+                    <label for="player1-name">Player One: </label>
+                    <input type="text" id="player1-name" placeholder="Bob" maxlength="25">
+                    <label for="player2-name">Player Two: </label>
+                    <input type="text" id="player2-name" placeholder="John" maxlength="25">
+                    <button type="submit">Play!</button>
+                </fieldset>
+            </form>
         </div>
+        <div class="game-content hidden">
+            <h3></h3>
+            <div class="game-cells-grid">
+                <!-- Grid Content -->
+            </div>
 
+        </div>
     </div>
+    <footer>@LMM588</footer>
     <script src="script.js"></script>
 </body>
 
